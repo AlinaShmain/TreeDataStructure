@@ -122,7 +122,7 @@ class BinarySearchTree {
         node.right = removeNode(node.right, tempNode.data);
         return node;
       } else if (data < node.data) {
-        node.left = removeNode(node.right, data);
+        node.left = removeNode(node.left, data);
         return node;
       } else {
         node.right = removeNode(node.right, data);

@@ -279,25 +279,25 @@ function EmptyError(message) {
 EmptyError.prototype = Object.create(Error.prototype);
 EmptyError.prototype.constructor = EmptyError;
 
-const console = (function (oldCons) {
+const console = (function (origCons) {
   return {
     log: function () {
       let args = Array.prototype.slice.call(arguments);
 
-      // oldCons.log.apply(this, args);
+      // origCons.log.apply(this, args);
       for (let i = 0; i < args.length; i++) {
         if (args[i] instanceof Error) {
-          oldCons.log.call(
+          origCons.log.call(
             this,
             `Sorry, the operation cannot be completed\nType of the error: ${args[i].name}\nMessage: ${args[i].message}`
           );
         } else {
-          oldCons.log.call(this, args[i]);
+          origCons.log.call(this, args[i]);
         }
       }
 
       const date = new Date();
-      oldCons.log.call(
+      origCons.log.call(
         this,
         `Time: ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}\n`
       );

@@ -43,16 +43,18 @@ class BinarySearchTree {
   }
 
   insert(data) {
-    if (!data) {
-      console.log("No Data Specified");
-      return;
-    }
-    let newNode = new TreeNode(data);
-    if (this.root === null) {
-      this.root = newNode;
-      console.log(`node ${data} was added to the tree`);
-    } else {
-      this.insertNode(this.root, newNode);
+    try {
+      if (!data) throw new NoDataError();
+
+      let newNode = new TreeNode(data);
+      if (this.root === null) {
+        this.root = newNode;
+        console.log(`node ${data} was added to the tree`);
+      } else {
+        this.insertNode(this.root, newNode);
+      }
+    } catch (e) {
+      console.log(e);
     }
   }
 
@@ -118,11 +120,9 @@ class BinarySearchTree {
   }
 
   find(data) {
-    if (!data) {
-      console.log("No Data Specified");
-      return;
-    }
     try {
+      if (!data) throw new NoDataError();
+
       let current = this.root;
 
       if (!current) {
@@ -148,11 +148,9 @@ class BinarySearchTree {
   }
 
   isPresent(data) {
-    if (!data) {
-      console.log("No Data Specified");
-      return;
-    }
     try {
+      if (!data) throw new NoDataError();
+
       let current = this.root;
       let present = false;
       if (!current) throw new EmptyError();
@@ -175,72 +173,75 @@ class BinarySearchTree {
   }
 
   remove(data) {
-    if (!data) {
-      console.log("No Data Specified");
+    try {
+      if (!data) throw new NoDataError();
+    } catch (e) {
+      console.log(e);
       return;
     }
-    const removeNode = (node, data) => {
-      try {
-        if (!node) {
-          console.log(data);
-          if (node !== this.root)
-            console.log(`there is no such node ${data} in the tree`);
-          else throw new EmptyError();
+  
+    this.root = this.removeNode(this.root, data);
+  }
+
+  removeNode(node, data) {
+    try {
+      if (!node) {
+        if (node !== this.root)
+          console.log(`there is no such node ${data} in the tree`);
+        else throw new EmptyError();
+        return null;
+      }
+      if (data === node.data) {
+        if (node.left === null && node.right === null) {
+          console.log(`node ${data} was removed from the tree`);
           return null;
         }
-        if (data === node.data) {
-          if (node.left === null && node.right === null) {
-            console.log(`node ${data} was removed from the tree`);
-            return null;
-          }
-          if (node.left === null) {
-            console.log(`node ${data} was removed from the tree`);
-            return node.right;
-          }
-          if (node.right === null) return node.left;
-          let tempNode = node.right;
-          while (tempNode.left !== null) {
-            tempNode = tempNode.left;
-          }
-          node.data = tempNode.data;
-          node.right = removeNode(node.right, tempNode.data);
-          return node;
-        } else if (data < node.data) {
-          node.left = removeNode(node.left, data);
-          return node;
-        } else {
-          node.right = removeNode(node.right, data);
-          return node;
+        if (node.left === null) {
+          console.log(`node ${data} was removed from the tree`);
+          return node.right;
         }
-      } catch (e) {
-        console.log(e);
+        if (node.right === null) return node.left;
+        let tempNode = node.right;
+        while (tempNode.left !== null) {
+          tempNode = tempNode.left;
+        }
+        node.data = tempNode.data;
+        node.right = this.removeNode(node.right, tempNode.data);
+        return node;
+      } else if (data < node.data) {
+        node.left = this.removeNode(node.left, data);
+        return node;
+      } else {
+        node.right = this.removeNode(node.right, data);
+        return node;
       }
-    };
-    this.root = removeNode(this.root, data);
-  }
-
-  inorder(node, callback) {
-    if (node) {
-      node.left && this.inorder(node.left, callback);
-      callback && callback(node.data);
-      console.log(`Node: ${node.data}`);
-      node.right && this.inorder(node.right, callback);
+    } catch (e) {
+      console.log(e);
     }
   }
 
-  preorder(node, callback) {
+  inorderTraverse(node, callback) {
     if (node) {
+      node.left && this.inorderTraverse(node.left, callback);
       callback && callback(node.data);
       console.log(`Node: ${node.data}`);
-      node.left && this.preorder(node.left, callback);
-      node.right && this.preorder(node.right, callback);
+      node.right && this.inorderTraverse(node.right, callback);
     }
   }
 
-  postorder(node, callback) {
+  preorderTraverse(node, callback) {
     if (node) {
-      node.left && this.postorder(node.left, callback);
-      node.right && this.postorder(node.right, callback);
+      callback && callback(node.data);
+      console.log(`Node: ${node.data}`);
+      node.left && this.preorderTraverse(node.left, callback);
+      node.right && this.preorderTraverse(node.right, callback);
+    }
+  }
+
+  postorderTraverse(node, callback) {
+    if (node) {
+      node.left && this.postorderTraverse(node.left, callback);
+      node.right && this.postorderTraverse(node.right, callback);
       callback && callback(node.data);
       console.log(`Node: ${node.data}`);
     }
@@ -279,12 +280,19 @@ function EmptyError(message) {
 EmptyError.prototype = Object.create(Error.prototype);
 EmptyError.prototype.constructor = EmptyError;
 
+function NoDataError(message) {
+  this.name = "NoDataError";
+  this.message = message || "No Data Specified";
+  this.stack = new Error().stack;
+}
+NoDataError.prototype = Object.create(Error.prototype);
+NoDataError.prototype.constructor = NoDataError;
+
 const console = (function (origCons) {
   return {
     log: function () {
       let args = Array.prototype.slice.call(arguments);
 
-      // origCons.log.apply(this, args);
       for (let i = 0; i < args.length; i++) {
         if (args[i] instanceof Error) {
           origCons.log.call(
@@ -301,7 +309,7 @@ const console = (function (origCons) {
         this,
         `Time: ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}\n`
       );
-    }
+    },
   };
 })(global.console !== undefined ? global.console : window.console);
 
@@ -322,8 +330,8 @@ bst.find(8);
 bst.find(7);
 
 console.log("inorder traversal:");
-bst.inorder(root);
+bst.inorderTraverse(root);
 console.log("preorder traversal:");
-bst.preorder(root);
+bst.preorderTraverse(root);
 console.log("postorder traversal:");
-bst.postorder(root);
+bst.postorderTraverse(root);
